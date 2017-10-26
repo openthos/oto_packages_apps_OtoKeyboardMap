@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Button
+        android:id="@+id/bt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:textSize="20sp" />
+
+    <RelativeLayout
+        android:id="@+id/rl_direction_key"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true">
+
+        <ImageView
+            android:id="@+id/iv_big"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:src="@drawable/mapping_directionkey_bg_bigcircle_shape" />
+
+        <ImageView
+            android:id="@+id/iv_small"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:src="@drawable/mapping_directionkey_bg_smallcircle_shape" />
+
+        <TextView
+            android:id="@+id/tv_up"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/iv_big"
+            android:layout_centerHorizontal="true"
+            android:paddingTop="15dp"
+            android:text="@string/w"
+            android:textSize="40sp" />
+
+        <TextView
+            android:id="@+id/tv_down"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/iv_big"
+            android:layout_centerHorizontal="true"
+            android:paddingBottom="15dp"
+            android:text="@string/s"
+            android:textSize="40sp" />
+
+        <TextView
+            android:id="@+id/tv_left"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/iv_big"
+            android:layout_centerVertical="true"
+            android:paddingLeft="15dp"
+            android:text="@string/a"
+            android:textSize="40sp" />
+
+        <TextView
+            android:id="@+id/tv_right"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignRight="@+id/iv_big"
+            android:layout_centerVertical="true"
+            android:paddingRight="15dp"
+            android:text="@string/d"
+            android:textSize="40sp" />
+
+    </RelativeLayout>
+</RelativeLayout>
