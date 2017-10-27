@@ -51,6 +51,10 @@ public class ControlView2 extends FrameLayout implements View.OnClickListener {
     private View mTrendView, mTrendByButtonView;
     private TextView mTvLeft, mTvUp, mTvRight, mTvDown;
 
+    private double mDistance;
+    private int mMinRadius, mMaxRadius;
+    private int mCircleThick = 10;
+
     public ControlView2(Context context) {
         super(context);
         mPaint = new Paint();
@@ -59,6 +63,8 @@ public class ControlView2 extends FrameLayout implements View.OnClickListener {
         setBackgroundColor(0x55ffffff);
         ViewManager.mDragViewList.clear();
 
+        mMinRadius = MainActivity.screenHeight / 16;
+        mMaxRadius = MainActivity.screenHeight / 4;
     }
 
     boolean isAdd = false;
@@ -113,7 +119,9 @@ public class ControlView2 extends FrameLayout implements View.OnClickListener {
                     mRlDirectionKey.setLayoutParams(mRlDirectionParams);
 
                     DirectionKeyTouchListener touchListener = new DirectionKeyTouchListener();
+                    DirectionKeyHoverListener hoverListener = new DirectionKeyHoverListener();
                     mRlDirectionKey.setOnTouchListener(touchListener);
+                    mRlDirectionKey.setOnHoverListener(hoverListener);
                     mTvLeft.setOnTouchListener(touchListener);
                     mTvUp.setOnTouchListener(touchListener);
                     mTvRight.setOnTouchListener(touchListener);
@@ -283,7 +291,6 @@ public class ControlView2 extends FrameLayout implements View.OnClickListener {
     }
 
     class DirectionKeyTouchListener implements View.OnTouchListener {
-        boolean isClick;
         int lastX, lastY;
 
         int newLeft, newTop, newRight, newBottom;
@@ -292,10 +299,8 @@ public class ControlView2 extends FrameLayout implements View.OnClickListener {
         public boolean onTouch(View v, MotionEvent event) {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    mBigCircleRadius = mRlDirectionKey.getWidth() / 2;
                     mIsFunctionKey = false;
 
-                    isClick = true;
                     lastX = (int) event.getRawX();
                     lastY = (int) event.getRawY();
                     if (v.getId() != R.id.rl_direction_key) {
@@ -314,37 +319,38 @@ public class ControlView2 extends FrameLayout implements View.OnClickListener {
                     mCircleCenterY = mLocations[1] + mBigCircleRadius;
                     break;
                 case MotionEvent.ACTION_MOVE:
-//                    isClick = false;
                     if (v.getId() == R.id.rl_direction_key) {
                         int dX = (int) (event.getRawX() - lastX);
                         int dY = (int) (event.getRawY() - lastY);
-//                        if (mCanResize) {
-//                            mIsDrag = true;
-                         /*   if (mBigCircleRadius >= 80 && mBigCircleRadius <= 500) {
-                                double distance = Math.sqrt(Math.pow(event.getRawX() - mCircleCenterX, 2) + Math.pow(event.getRawY() - mCircleCenterY, 2));
-                                float scale = (float) (distance / (v.getWidth() / 2));
+                        if (mCanResize) {
+                            mIsDrag = true;
+                            mDistance = Math.sqrt(Math.pow(event.getRawX() - mCircleCenterX, 2)
+                                    + Math.pow(event.getRawY() - mCircleCenterY, 2));
+                            float scale = (float) (mDistance / (v.getWidth() / 2));
+                            if ((mBigCircleRadius >= mMinRadius && mBigCircleRadius <= mMaxRadius)
+                                    || (mBigCircleRadius < mMinRadius
+                                            && (mDistance > mBigCircleRadius))
+                                    || (mBigCircleRadius > mMaxRadius
+                                            && (mDistance < mBigCircleRadius))) {
                                 v.setScaleX(scale);
                                 v.setScaleY(scale);
-                                mBigCircleRadius = (int) distance;
-                            }*/
-//                        } else {
-                        newLeft = v.getLeft() + dX;
-                        newTop = v.getTop() + dY;
-                        newRight = v.getRight() + dX;
-                        newBottom = v.getBottom() + dY;
-
-                        v.layout(newLeft, newTop, newRight, newBottom);
-
-//                            v.postInvalidate();
+                                mBigCircleRadius = (int) mDistance;
+                                mCircleThick = (int) (10 * scale);
+                            }
+                        } else {
+                            newLeft = v.getLeft() + dX;
+                            newTop = v.getTop() + dY;
+                            newRight = v.getRight() + dX;
+                            newBottom = v.getBottom() + dY;
+                            v.layout(newLeft, newTop, newRight, newBottom);
+                        }
                         lastX = lastX + dX;
                         lastY = lastY + dY;
                     }
-
-//                    }
                     break;
                 case MotionEvent.ACTION_UP:
-//                    mCanResize = false;
-//                    mIsDrag = false;
+                    mCanResize = false;
+                    mIsDrag = false;
                     if (v.getId() == R.id.rl_direction_key) {
                         mRlDirectionParams.leftMargin = newLeft;
                         mRlDirectionParams.topMargin = newTop;
@@ -366,6 +372,35 @@ public class ControlView2 extends FrameLayout implements View.OnClickListener {
                     break;
             }
             return true;
+        }
+    }
+
+    private class DirectionKeyHoverListener implements View.OnHoverListener {
+
+        @Override
+        public boolean onHover(View v, MotionEvent event) {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_HOVER_ENTER:
+                    if (mBigCircleRadius == 0) {
+                        mBigCircleRadius = mRlDirectionKey.getWidth() / 2;
+                    }
+                    break;
+                case MotionEvent.ACTION_HOVER_MOVE:
+                    if (!mIsDrag) {
+                        mDistance = Math.pow(Math.abs(event.getRawX() - mCircleCenterX), 2)
+                                + Math.pow(Math.abs(event.getRawY() - mCircleCenterY), 2);
+                        if (mDistance <= Math.pow(mBigCircleRadius, 2)
+                                && mDistance >= Math.pow(mBigCircleRadius - mCircleThick, 2)) {
+                            mCanResize = true;
+                        } else {
+                            mCanResize = false;
+                        }
+                    }
+                    break;
+                case MotionEvent.ACTION_HOVER_EXIT:
+                    break;
+            }
+            return false;
         }
     }
 }
