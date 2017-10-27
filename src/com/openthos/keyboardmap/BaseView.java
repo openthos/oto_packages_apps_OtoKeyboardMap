@@ -56,7 +56,7 @@ public class BaseView extends View {
     public boolean dispatchKeyEvent(final KeyEvent event) {
         final int keyCode = event.getKeyCode();
         switch (keyCode) {
-            case KeyEvent.KEYCODE_F1:
+            case KeyEvent.KEYCODE_F12:
                 MainActivity.mHandler.sendEmptyMessage(0);
                 return true;
         }

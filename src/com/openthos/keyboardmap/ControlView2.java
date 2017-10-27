@@ -123,8 +123,11 @@ public class ControlView2 extends FrameLayout implements View.OnClickListener {
                     FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
                     layoutParams.gravity = Gravity.CENTER;
                     mViewGroup.addView(mTrendByButtonView, layoutParams);
-
-                }
+                    ViewManager.mDirectionKeyArr[0] = KeyEvent.KEYCODE_A;
+                    ViewManager.mDirectionKeyArr[1] = KeyEvent.KEYCODE_W;
+                    ViewManager.mDirectionKeyArr[2] = KeyEvent.KEYCODE_D;
+                    ViewManager.mDirectionKeyArr[3] = KeyEvent.KEYCODE_S;
+                    }
                 break;
             case R.id.save:
                 MainActivity.mHandler.sendEmptyMessage(1);

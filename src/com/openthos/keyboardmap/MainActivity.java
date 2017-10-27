@@ -10,13 +10,14 @@ import android.app.Activity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import java.util.HashMap;
 
 public class MainActivity extends Activity {
 
-    Button btn_openSetting, btn_openView;
-
+    private Button btn_openSetting, btn_openView;
+    private TextView mInfo;
     public static int screenWidth = 0;
     public static int screenHeight = 0;
     public static Handler mHandler;
@@ -26,7 +27,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-initKey();
+        initKey();
 
 
         WallpaperManager wm = WallpaperManager.getInstance(this);
@@ -35,6 +36,7 @@ initKey();
 
         btn_openSetting = (Button) findViewById(R.id.btn_openSetting);
         btn_openView = (Button) findViewById(R.id.btn_openFloatingBall);
+        mInfo = (TextView) findViewById(R.id.info);
 
         btn_openSetting.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -47,6 +49,8 @@ initKey();
             @Override
             public void onClick(View v) {
                 ViewManager.getInstance(MainActivity.this).showBase();
+                v.setVisibility(View.GONE);
+                mInfo.setText(MainActivity.this.getString(R.string.info));
             }
         });
 
@@ -79,9 +83,9 @@ initKey();
         mKeyMap.put(KeyEvent.KEYCODE_BUTTON_THUMBL, "thumb-left");
         mKeyMap.put(KeyEvent.KEYCODE_BUTTON_THUMBR, "thumb-right");
 
-        mKeyMap.put(KeyEvent.KEYCODE_DPAD_LEFT, "left");
-        mKeyMap.put(KeyEvent.KEYCODE_DPAD_RIGHT, "right");
-        mKeyMap.put(KeyEvent.KEYCODE_DPAD_UP, "up");
-        mKeyMap.put(KeyEvent.KEYCODE_DPAD_DOWN, "down");
+        mKeyMap.put(KeyEvent.KEYCODE_DPAD_LEFT, getString(R.string.left));
+        mKeyMap.put(KeyEvent.KEYCODE_DPAD_RIGHT, getString(R.string.right));
+        mKeyMap.put(KeyEvent.KEYCODE_DPAD_UP, getString(R.string.up));
+        mKeyMap.put(KeyEvent.KEYCODE_DPAD_DOWN, getString(R.string.down));
     }
 }

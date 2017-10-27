@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">键盘映射工具</string>
+    <string name="open_setting">打开设置</string>
+    <string name="open_map">开启映射</string>
+    <string name="add_button">增加按钮</string>
+    <string name="save">保存</string>
+    <string name="add_trend_by_button">增加方向轮盘组件</string>
+    <string name="add_trend">增加手柄摇杆组件</string>
+    <string name="w">W</string>
+    <string name="s">S</string>
+    <string name="a">A</string>
+    <string name="d">D</string>
+    <string name="left">←</string>
+    <string name="right">→</string>
+    <string name="up">↑</string>
+    <string name="down">↓</string>
+    <string name="info">启动成功，现在可以使用了。\n请不要关闭该程序，否则无法使用！！！\n按F12键可进入设置功能</string>
+
+
+
+
+</resources>
