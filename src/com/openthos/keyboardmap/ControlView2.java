@@ -363,7 +363,7 @@ public class ControlView2 extends FrameLayout implements View.OnClickListener {
                         int top = mTvUp.getPaddingTop();
                         int size = (int) mTvUp.getTextSize();
 
-                        mDistanceFromCircleToKey = mBigCircleRadius - top - size;
+                        mDistanceFromCircleToKey = mBigCircleRadius - top;
                         ViewManager.mDirectionKeyArr[4] = mCircleCenterX;
                         ViewManager.mDirectionKeyArr[5] = mCircleCenterY;
                         ViewManager.mDirectionKeyArr[6] = mDistanceFromCircleToKey;
