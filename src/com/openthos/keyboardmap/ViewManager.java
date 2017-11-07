@@ -1,10 +1,14 @@
 package com.openthos.keyboardmap;
 
+import android.app.ActivityManager;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.PixelFormat;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -20,7 +24,7 @@ import java.util.List;
 
 public class ViewManager {
     BaseView mBaseView;
-    ViewGroup mControlView;
+    ControlView mControlView;
     WindowManager windowManager;
     public static ViewManager manager;
     Context context;
@@ -85,5 +89,92 @@ public class ViewManager {
             mControlViewParams.format = PixelFormat.RGBA_8888;
         }
         windowManager.addView(mControlView, mControlViewParams);
+
+        loadMappingConfiguration();
+    }
+        // loading mapping configuration
+    public void loadMappingConfiguration() {
+        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningTaskInfo> runningTasks = am.getRunningTasks(Integer.MAX_VALUE);
+        for (ActivityManager.RunningTaskInfo info : runningTasks) {
+            android.util.Log.i("2211", info.topActivity.getPackageName() + "");
+        }
+
+        String packageName = am.getRunningTasks(Integer.MAX_VALUE).get(1)
+                .topActivity.getPackageName();
+
+
+        MappingSQLiteOpenHelper mOpenHelper = new MappingSQLiteOpenHelper(context);
+        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+        Cursor directionCursor = db.rawQuery("select * from " + mOpenHelper.mDirectionKeyTableName
+                + " where packageName = ?", new String[]{packageName});
+
+        KeyEvent event = new KeyEvent(0, 0);
+        String key = "";
+
+        if (directionCursor != null && directionCursor.getCount() != 0) {
+            while (directionCursor.moveToNext()) {
+                int leftKeyCode = directionCursor.getInt(
+                        directionCursor.getColumnIndex("leftKeyCode"));
+                int topKeyCode = directionCursor.getInt(
+                        directionCursor.getColumnIndex("topKeyCode"));
+                int rightKeyCode = directionCursor.getInt(
+                        directionCursor.getColumnIndex("rightKeyCode"));
+                int bottomKeyCode = directionCursor.getInt(
+                        directionCursor.getColumnIndex("bottomKeyCode"));
+                int circleCenterX = directionCursor.getInt(
+                        directionCursor.getColumnIndex("circleCenterX"));
+                int circleCenterY = directionCursor.getInt(
+                        directionCursor.getColumnIndex("circleCenterY"));
+                int distance = directionCursor.getInt(
+                        directionCursor.getColumnIndex("distance"));
+
+                mControlView.createVirtualWhell(circleCenterX - mControlView.mBigCircleRadius,
+                        circleCenterY - mControlView.mBigCircleRadius, true,
+                        convertKeyCodeToKey(event, leftKeyCode),
+                        convertKeyCodeToKey(event, topKeyCode),
+                        convertKeyCodeToKey(event, rightKeyCode),
+                        convertKeyCodeToKey(event, bottomKeyCode));
+                mDirectionKeyArr[0] = leftKeyCode;
+                mDirectionKeyArr[1] = topKeyCode;
+                mDirectionKeyArr[2] = rightKeyCode;
+                mDirectionKeyArr[3] = bottomKeyCode;
+                mDirectionKeyArr[4] = circleCenterX;
+                mDirectionKeyArr[5] = circleCenterY;
+                mDirectionKeyArr[6] = distance;
+
+            }
+        }
+        directionCursor.close();
+
+        Cursor functionCursor = db.rawQuery("select * from " + mOpenHelper.mFunctionKeyTableName +
+                " where packageName = ?", new String[]{packageName});
+        ViewManager.mDragViewList.clear();
+        ControlView.DragView dragView = null;
+        if (functionCursor != null && functionCursor.getCount() != 0) {
+            while (functionCursor.moveToNext()) {
+                int keyCode = functionCursor.getInt(functionCursor.getColumnIndex("keyCode"));
+                int valueX = functionCursor.getInt(functionCursor.getColumnIndex("valueX"));
+                int valueY = functionCursor.getInt(functionCursor.getColumnIndex("valueY"));
+                dragView = mControlView.createNewDragView(convertKeyCodeToKey(event, keyCode), valueX, valueY);
+                dragView.keyCode = keyCode;
+                mDragViewList.add(dragView);
+            }
+        }
+        functionCursor.close();
+        db.close();
+    }
+
+    public String convertKeyCodeToKey(KeyEvent event, int keyCode) {
+        String key = MainActivity.mKeyMap.get(keyCode);
+        if (key == null) {
+            boolean isPrintingKey = event.getKeyCharacterMap().isPrintingKey(keyCode);
+            if (isPrintingKey) {
+                key = event.getKeyCharacterMap().getDisplayLabel(keyCode) + "";
+            } else {
+                key = keyCode + "";
+            }
+        }
+        return key;
     }
 }

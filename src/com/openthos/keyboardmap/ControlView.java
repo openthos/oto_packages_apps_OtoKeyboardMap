@@ -1,6 +1,8 @@
 package com.openthos.keyboardmap;
 
+import android.app.ActivityManager;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -39,7 +41,7 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
     private int mCircleCenterX;
     private int mCircleCenterY;
     public int mDistanceFromCircleToKey;
-    private int mBigCircleRadius;
+    public int mBigCircleRadius;
     boolean mIsDrag;
     boolean mCanResize;
     private int[] mLocations = new int[2];
@@ -107,43 +109,45 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
             case R.id.add_trend_control:
                 break;
             case R.id.add_trend_control_by_button:
-                if (mTrendByButtonView == null) {
-                    mTrendByButtonView = View.inflate(mContext, R.layout.trend_view, null);
-                    mRlDirectionKey = (RelativeLayout) mTrendByButtonView.findViewById(R.id.rl_direction_key);
-                    mTvLeft = (TextView) mTrendByButtonView.findViewById(R.id.tv_left);
-                    mTvUp = (TextView) mTrendByButtonView.findViewById(R.id.tv_up);
-                    mTvRight = (TextView) mTrendByButtonView.findViewById(R.id.tv_right);
-                    mTvDown = (TextView) mTrendByButtonView.findViewById(R.id.tv_down);
-
-                    mRlDirectionParams = new RelativeLayout.LayoutParams(
-                            RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-                    mRlDirectionKey.setLayoutParams(mRlDirectionParams);
-
-                    DirectionKeyTouchListener touchListener = new DirectionKeyTouchListener();
-                    DirectionKeyHoverListener hoverListener = new DirectionKeyHoverListener();
-                    mRlDirectionKey.setOnTouchListener(touchListener);
-                    mRlDirectionKey.setOnHoverListener(hoverListener);
-                    mTvLeft.setOnTouchListener(touchListener);
-                    mTvUp.setOnTouchListener(touchListener);
-                    mTvRight.setOnTouchListener(touchListener);
-                    mTvDown.setOnTouchListener(touchListener);
-
-
-                    FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-                    layoutParams.gravity = Gravity.CENTER;
-                    mViewGroup.addView(mTrendByButtonView, layoutParams);
-                    ViewManager.mDirectionKeyArr[0] = KeyEvent.KEYCODE_A;
-                    ViewManager.mDirectionKeyArr[1] = KeyEvent.KEYCODE_W;
-                    ViewManager.mDirectionKeyArr[2] = KeyEvent.KEYCODE_D;
-                    ViewManager.mDirectionKeyArr[3] = KeyEvent.KEYCODE_S;
-                    }
+               createVirtualWhell(0, 0, false, null, null, null, null);
                 break;
             case R.id.save:
                 MainActivity.mHandler.sendEmptyMessage(1);
+                storeMappingConfiguration();
                 break;
         }
     }
 
+    // store mapping configuration
+    public void storeMappingConfiguration() {
+        ActivityManager am = (ActivityManager) mContext                                                                                                                                                                         .getSystemService(Context.ACTIVITY_SERVICE);
+        String packageName = am.getRunningTasks(Integer.MAX_VALUE).get(1)
+                .topActivity.getPackageName();
+        MappingSQLiteOpenHelper mOpenHelper =
+                new MappingSQLiteOpenHelper(mContext);
+        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+        db.delete(mOpenHelper.mDirectionKeyTableName,
+                "packageName = ?", new String[] {packageName});
+        db.delete(mOpenHelper.mFunctionKeyTableName,
+                "packageName = ?", new String[] {packageName});
+
+        db.execSQL("insert into " + mOpenHelper.mDirectionKeyTableName +
+                        "(packageName, schemeName, leftKeyCode, topKeyCode, rightKeyCode," +
+                        " bottomKeyCode, circleCenterX, circleCenterY, distance) " +
+                        "values(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                new Object[] {packageName, "default", ViewManager.mDirectionKeyArr[0],
+                        ViewManager.mDirectionKeyArr[1], ViewManager.mDirectionKeyArr[2],
+                        ViewManager.mDirectionKeyArr[3], ViewManager.mDirectionKeyArr[4],
+                        ViewManager.mDirectionKeyArr[5], ViewManager.mDirectionKeyArr[6]});
+
+        for (DragView dragView : ViewManager.mDragViewList) {
+            db.execSQL("insert into " + mOpenHelper.mFunctionKeyTableName +
+                    "(packageName, schemeName,keyCode, valueX, valueY) values(?, ?, ?, ?, ?)",
+                           new Object[] {packageName, "default", dragView.keyCode,
+                                           dragView.mMotionX + 45, dragView.mMotionY + 45});
+        }
+        db.close();
+     }
 
     public Bitmap buildBitmap(String key) {
         final TextView textView = new TextView(mContext);
@@ -167,6 +171,56 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
 
 //        setContentView(mViewGroup);
         return mCurrentView;
+    }
+
+    public void createVirtualWhell(int leftMargin, int topMargin, boolean isLoaded, String leftKey,
+                                   String topKey, String rightKey, String bottomKey) {
+        if (mTrendByButtonView == null) {
+            mTrendByButtonView = View.inflate(mContext, R.layout.trend_view, null);
+            mRlDirectionKey = (RelativeLayout) mTrendByButtonView.findViewById(R.id.rl_direction_key);
+            mTvLeft = (TextView) mTrendByButtonView.findViewById(R.id.tv_left);
+            mTvUp = (TextView) mTrendByButtonView.findViewById(R.id.tv_up);
+            mTvRight = (TextView) mTrendByButtonView.findViewById(R.id.tv_right);
+            mTvDown = (TextView) mTrendByButtonView.findViewById(R.id.tv_down);
+            if (isLoaded) {
+                mTvLeft.setText(leftKey);
+                mTvUp.setText(topKey);
+                mTvRight.setText(rightKey);
+                mTvDown.setText(bottomKey);
+            } else {
+                ViewManager.mDirectionKeyArr[0] = KeyEvent.KEYCODE_A;
+                ViewManager.mDirectionKeyArr[1] = KeyEvent.KEYCODE_W;
+                ViewManager.mDirectionKeyArr[2] = KeyEvent.KEYCODE_D;
+                ViewManager.mDirectionKeyArr[3] = KeyEvent.KEYCODE_S;
+            }
+
+            mRlDirectionParams = new RelativeLayout.LayoutParams(
+                    RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+            mRlDirectionParams.leftMargin = leftMargin;
+            mRlDirectionParams.topMargin = topMargin;
+
+            mRlDirectionKey.setLayoutParams(mRlDirectionParams);
+            if (mBigCircleRadius == 0) {
+                mRlDirectionKey.measure(0, 0);
+                mBigCircleRadius = mRlDirectionKey.getMeasuredWidth() / 2;
+            }
+
+            DirectionKeyTouchListener touchListener = new DirectionKeyTouchListener();
+            DirectionKeyHoverListener hoverListener = new DirectionKeyHoverListener();
+            mRlDirectionKey.setOnTouchListener(touchListener);
+            mRlDirectionKey.setOnHoverListener(hoverListener);
+            mTvLeft.setOnTouchListener(touchListener);
+            mTvUp.setOnTouchListener(touchListener);
+            mTvRight.setOnTouchListener(touchListener);
+            mTvDown.setOnTouchListener(touchListener);
+
+
+            FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT);
+            layoutParams.gravity = Gravity.CENTER;
+            mViewGroup.addView(mTrendByButtonView, layoutParams);
+        }
     }
 
     @Override
