@@ -26,8 +26,8 @@ public class ViewManager {
     Context context;
     private WindowManager.LayoutParams mBaseViewParams;
     private WindowManager.LayoutParams mControlViewParams;
-    public static List<ControlView2.DragView> mDragViewList = new ArrayList<>();
-    public static Integer[] mDirectionKeyArr = new Integer[7];
+    public static List<ControlView.DragView> mDragViewList = new ArrayList<>();
+    public static Integer[] mDirectionKeyArr = new Integer[]{-1, -1, -1, -1, -1, -1, -1};
 
     private ViewManager(Context context) {
         this.context = context;
@@ -73,7 +73,7 @@ public class ViewManager {
 
     public void showControl() {
         hideView();
-        mControlView  = new ControlView2(context);
+        mControlView  = new ControlView(context);
         windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         if (mControlViewParams == null) {
             mControlViewParams = new WindowManager.LayoutParams();

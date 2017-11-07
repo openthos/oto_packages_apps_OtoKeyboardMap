@@ -16,7 +16,7 @@ import java.util.HashMap;
 
 public class MainActivity extends Activity {
 
-    private Button btn_openSetting, btn_openView;
+    private Button mStartMap;
     private TextView mInfo;
     public static int screenWidth = 0;
     public static int screenHeight = 0;
@@ -29,23 +29,14 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         initKey();
 
-
         WallpaperManager wm = WallpaperManager.getInstance(this);
         screenWidth = wm.getDesiredMinimumWidth();
         screenHeight = wm.getDesiredMinimumHeight();
 
-        btn_openSetting = (Button) findViewById(R.id.btn_openSetting);
-        btn_openView = (Button) findViewById(R.id.btn_openFloatingBall);
+        mStartMap = (Button) findViewById(R.id.btn_openFloatingBall);
         mInfo = (TextView) findViewById(R.id.info);
 
-        btn_openSetting.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
-            }
-        });
-
-        btn_openView.setOnClickListener(new View.OnClickListener() {
+        mStartMap.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ViewManager.getInstance(MainActivity.this).showBase();

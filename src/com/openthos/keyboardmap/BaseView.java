@@ -21,16 +21,21 @@ public class BaseView extends View {
     private int mCircleCenterX, mCircleCenterY, mCurrentDirectionX,
             mCurrentDirectionY, mDistanceFromCircleToKey;
     public List<Integer> mDirectionKeys = new ArrayList<>();
+    private boolean is = false;
 
     public BaseView(Context context) {
         super(context);
         paint = new Paint();
         mFunctionKeys.clear();
         mDirectionKeys.clear();
-        for (ControlView2.DragView dragView : ViewManager.mDragViewList) {
+        for (ControlView.DragView dragView : ViewManager.mDragViewList) {
             mFunctionKeys.add(dragView.keyCode);
         }
         mDirectionKeys = Arrays.asList(ViewManager.mDirectionKeyArr);
+        if (mDirectionKeys.size() > 0) {
+            mCircleCenterX = mDirectionKeys.get(4);
+            mCircleCenterY = mDirectionKeys.get(5);
+        }
     }
 
     public void processDirectionKeyMapping(final Instrumentation in, final int eventType,
@@ -72,6 +77,33 @@ public class BaseView extends View {
         }.start();
     }
 
+    private float mFx = 0.0f;
+    private float mFy = 0.0f;
+
+    @Override
+    public boolean dispatchGenericMotionEvent(MotionEvent event) {
+        if (mCircleCenterX == -1 && mCircleCenterY == -1)
+            return super.dispatchGenericMotionEvent(event);
+        double fx = ((int) (event.getX() * 10)) / 10.0;
+        double fy = ((int) (event.getY() * 10)) / 10.0;
+        if (fx != 0 && fy != 0) {
+            mFx = (float) (mCircleCenterX + fx*100);
+            mFy = (float) (mCircleCenterY + fy*100);
+            processDirectionKeyMapping(mInstrumentation, MotionEvent.ACTION_MOVE,
+                    mFx, mFy, !is, mCircleCenterX, mCircleCenterY);
+            if (!is)
+                is = true;
+        }
+        if (is &&fx == 0 && fy == 0 ){
+            is = false;
+            mFx = mFy = 0.0f;
+            processDirectionKeyMapping(mInstrumentation, MotionEvent.ACTION_UP,
+                    (float)( mCircleCenterX+ fx*100), (float)(mCircleCenterY+ fy*100) , false, mCircleCenterX, mCircleCenterY);
+        }
+
+        return super.dispatchGenericMotionEvent(event);
+    }
+
     @Override
     public boolean dispatchKeyEvent(final KeyEvent event) {
         final int keyCode = event.getKeyCode();
@@ -96,8 +128,6 @@ public class BaseView extends View {
                 mPressedDirectionKeyCount++;
                 if (mPressedDirectionKeyCount == 1) {
                     // todo down circle center
-                    mCircleCenterX = mDirectionKeys.get(4);
-                    mCircleCenterY = mDirectionKeys.get(5);
                     mDistanceFromCircleToKey = mDirectionKeys.get(6);
                     mCurrentDirectionX = mCircleCenterX;
                     mCurrentDirectionY = mCircleCenterY;
@@ -106,15 +136,15 @@ public class BaseView extends View {
                 if (event.getKeyCode() == mDirectionKeys.get(0)) {
                     // direction left
                     mCurrentDirectionX = mCurrentDirectionX - mDistanceFromCircleToKey;
-                } else  if (event.getKeyCode() == mDirectionKeys.get(1)) {
+                } else if (event.getKeyCode() == mDirectionKeys.get(1)) {
                     // direction up
                     mCurrentDirectionY = mCurrentDirectionY - mDistanceFromCircleToKey;
 
-                } else  if (event.getKeyCode() == mDirectionKeys.get(2)) {
+                } else if (event.getKeyCode() == mDirectionKeys.get(2)) {
                     // direction right
                     mCurrentDirectionX = mCurrentDirectionX + mDistanceFromCircleToKey;
 
-                } else  if (event.getKeyCode() == mDirectionKeys.get(3)) {
+                } else if (event.getKeyCode() == mDirectionKeys.get(3)) {
                     // direction down
                     mCurrentDirectionY = mCurrentDirectionY + mDistanceFromCircleToKey;
                 }
@@ -128,16 +158,21 @@ public class BaseView extends View {
                 }
             } else if (mFunctionKeys.contains(event.getKeyCode())) {
                 // todo down functionkey
-                    int index = mFunctionKeys.indexOf(keyCode);
-                if (mPressedDirectionKeyCount == 0) {
+                int index = mFunctionKeys.indexOf(keyCode);
+                if (is == true) {
+                    processFunctionKeyMapping(mInstrumentation, MotionEvent.ACTION_DOWN,
+                            ViewManager.mDragViewList.get(index).
+                                    mWUpX + 45, ViewManager.mDragViewList.get(index).mWUpY + 45,
+                            true, mCircleCenterX, mCircleCenterY, mFx, mFy);
+                } else if (mPressedDirectionKeyCount == 0) {
                     processFunctionKeyMapping(mInstrumentation, MotionEvent.ACTION_DOWN,
                             ViewManager.mDragViewList.get(index).mWUpX + 45,
-                            ViewManager.mDragViewList.get(index).mWUpY + 45, false, 0, 0 , 0, 0);
+                            ViewManager.mDragViewList.get(index).mWUpY + 45, false, 0, 0, 0, 0);
                 } else {
                     processFunctionKeyMapping(mInstrumentation, MotionEvent.ACTION_DOWN,
                             ViewManager.mDragViewList.get(index).
                                     mWUpX + 45, ViewManager.mDragViewList.get(index).mWUpY + 45,
-                            true, mCircleCenterX, mCircleCenterY ,
+                            true, mCircleCenterX, mCircleCenterY,
                             mCurrentDirectionX, mCurrentDirectionY);
                 }
             }
@@ -156,15 +191,15 @@ public class BaseView extends View {
                 if (event.getKeyCode() == mDirectionKeys.get(0)) {
                     // direction left
                     mCurrentDirectionX = mCurrentDirectionX + mDistanceFromCircleToKey;
-                } else  if (event.getKeyCode() == mDirectionKeys.get(1)) {
+                } else if (event.getKeyCode() == mDirectionKeys.get(1)) {
                     // direction up
                     mCurrentDirectionY = mCurrentDirectionY + mDistanceFromCircleToKey;
 
-                } else  if (event.getKeyCode() == mDirectionKeys.get(2)) {
+                } else if (event.getKeyCode() == mDirectionKeys.get(2)) {
                     // direction right
                     mCurrentDirectionX = mCurrentDirectionX - mDistanceFromCircleToKey;
 
-                } else  if (event.getKeyCode() == mDirectionKeys.get(3)) {
+                } else if (event.getKeyCode() == mDirectionKeys.get(3)) {
                     // direction down
                     mCurrentDirectionY = mCurrentDirectionY - mDistanceFromCircleToKey;
                 }
@@ -179,15 +214,20 @@ public class BaseView extends View {
             } else if (mFunctionKeys.contains(event.getKeyCode())) {
                 // todo up functionkey
                 int index = mFunctionKeys.indexOf(keyCode);
-                if (mPressedDirectionKeyCount == 0) {
+                if (is == true) {
+                    processFunctionKeyMapping(mInstrumentation, MotionEvent.ACTION_UP,
+                            ViewManager.mDragViewList.get(index).
+                                    mWUpX + 45, ViewManager.mDragViewList.get(index).mWUpY + 45,
+                            true, mCircleCenterX, mCircleCenterY, mFx, mFy);
+                } else if (mPressedDirectionKeyCount == 0) {
                     processFunctionKeyMapping(mInstrumentation, MotionEvent.ACTION_UP,
                             ViewManager.mDragViewList.get(index).mWUpX + 45,
-                            ViewManager.mDragViewList.get(index).mWUpY + 45, false, 0, 0 , 0, 0);
+                            ViewManager.mDragViewList.get(index).mWUpY + 45, false, 0, 0, 0, 0);
                 } else {
                     processFunctionKeyMapping(mInstrumentation, MotionEvent.ACTION_UP,
                             ViewManager.mDragViewList.get(index).
                                     mWUpX + 45, ViewManager.mDragViewList.get(index).mWUpY + 45,
-                            true, mCircleCenterX, mCircleCenterY ,
+                            true, mCircleCenterX, mCircleCenterY,
                             mCurrentDirectionX, mCurrentDirectionY);
                 }
             }
