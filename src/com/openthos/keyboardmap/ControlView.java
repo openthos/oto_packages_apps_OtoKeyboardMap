@@ -144,7 +144,7 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
             db.execSQL("insert into " + mOpenHelper.mFunctionKeyTableName +
                     "(packageName, schemeName,keyCode, valueX, valueY) values(?, ?, ?, ?, ?)",
                            new Object[] {packageName, "default", dragView.keyCode,
-                                           dragView.mMotionX + 45, dragView.mMotionY + 45});
+                                           dragView.mMotionX, dragView.mMotionY});
         }
         db.close();
      }
@@ -418,7 +418,7 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
                         int top = mTvUp.getPaddingTop();
                         int size = (int) mTvUp.getTextSize();
 
-                        mDistanceFromCircleToKey = mBigCircleRadius - top;
+                        mDistanceFromCircleToKey = mBigCircleRadius;
                         ViewManager.mDirectionKeyArr[4] = mCircleCenterX;
                         ViewManager.mDirectionKeyArr[5] = mCircleCenterY;
                         ViewManager.mDirectionKeyArr[6] = mDistanceFromCircleToKey;

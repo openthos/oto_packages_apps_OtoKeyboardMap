@@ -129,8 +129,8 @@ public class ViewManager {
                 int distance = directionCursor.getInt(
                         directionCursor.getColumnIndex("distance"));
 
-                mControlView.createVirtualWhell(circleCenterX - mControlView.mBigCircleRadius,
-                        circleCenterY - mControlView.mBigCircleRadius, true,
+                mControlView.createVirtualWhell(circleCenterX - distance,
+                        circleCenterY - distance, true,
                         convertKeyCodeToKey(event, leftKeyCode),
                         convertKeyCodeToKey(event, topKeyCode),
                         convertKeyCodeToKey(event, rightKeyCode),
