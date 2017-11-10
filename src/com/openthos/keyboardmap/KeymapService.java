@@ -40,12 +40,16 @@ public class KeymapService extends Service {
                         break;
                     case 1:
                         ViewManager.getInstance(KeymapService.this).showBase();
+                        break;
+                    case 2:
+                        ViewManager.getInstance(KeymapService.this).exit();
+
                 }
             }
         };
 
 
-        ViewManager.getInstance(KeymapService.this).showBase();
+        ViewManager.getInstance(KeymapService.this).showControl();
         return super.onStartCommand(intent, flags, startId);
     }
 

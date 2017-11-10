@@ -31,7 +31,7 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
     private Paint mPaint;
     private Context mContext;
     private ViewGroup mViewGroup;
-    private Button mAddButton, mAddTrend, mAddTrendByButton, mSave;
+    private Button mAddButton, mAddTrend, mAddTrendByButton, mSave, mExit;
     private Bitmap mBitmapW;
     private DragView mCurrentView;
 
@@ -87,10 +87,12 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
         mAddTrend = (Button) mViewGroup.findViewById(R.id.add_trend_control);
         mAddTrendByButton = (Button) mViewGroup.findViewById(R.id.add_trend_control_by_button);
         mSave = (Button) mViewGroup.findViewById(R.id.save);
+        mExit = (Button) mViewGroup.findViewById(R.id.exit);
         mAddButton.setOnClickListener(this);
         mAddTrend.setOnClickListener(this);
         mAddTrendByButton.setOnClickListener(this);
         mSave.setOnClickListener(this);
+        mExit.setOnClickListener(this);
     }
 
     @Override
@@ -114,6 +116,9 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
             case R.id.save:
                 KeymapService.mHandler.sendEmptyMessage(1);
                 storeMappingConfiguration();
+                break;
+            case R.id.exit:
+                KeymapService.mHandler.sendEmptyMessage(2);
                 break;
         }
     }

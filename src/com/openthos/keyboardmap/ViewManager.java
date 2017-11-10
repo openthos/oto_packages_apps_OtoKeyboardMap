@@ -74,6 +74,11 @@ public class ViewManager {
         }
     }
 
+    public void exit() {
+        hideView();
+        hideControl();
+    }
+
     public void showControl() {
         hideView();
         mControlView  = new ControlView(context);
@@ -91,6 +96,7 @@ public class ViewManager {
 
         loadMappingConfiguration();
     }
+
         // loading mapping configuration
     public void loadMappingConfiguration() {
         ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
