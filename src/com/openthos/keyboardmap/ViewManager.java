@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.PixelFormat;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -50,8 +49,8 @@ public class ViewManager {
         windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         if (mBaseViewParams == null) {
             mBaseViewParams = new WindowManager.LayoutParams();
-            mBaseViewParams.width = MainActivity.screenWidth;
-            mBaseViewParams.height = MainActivity.screenHeight;
+            mBaseViewParams.width = KeymapService.screenWidth;
+            mBaseViewParams.height = KeymapService.screenHeight;
             mBaseViewParams.gravity = Gravity.TOP | Gravity.LEFT;
             mBaseViewParams.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
             mBaseViewParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
@@ -81,8 +80,8 @@ public class ViewManager {
         windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         if (mControlViewParams == null) {
             mControlViewParams = new WindowManager.LayoutParams();
-            mControlViewParams.width = MainActivity.screenWidth;
-            mControlViewParams.height = MainActivity.screenHeight;
+            mControlViewParams.width = KeymapService.screenWidth;
+            mControlViewParams.height = KeymapService.screenHeight;
             mControlViewParams.gravity = Gravity.TOP | Gravity.LEFT;
             mControlViewParams.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
             mControlViewParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
@@ -96,11 +95,11 @@ public class ViewManager {
     public void loadMappingConfiguration() {
         ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         List<ActivityManager.RunningTaskInfo> runningTasks = am.getRunningTasks(Integer.MAX_VALUE);
-        for (ActivityManager.RunningTaskInfo info : runningTasks) {
-            android.util.Log.i("2211", info.topActivity.getPackageName() + "");
+        int index = 0;
+        if (runningTasks.size() > 1) {
+            index = 1;
         }
-
-        String packageName = am.getRunningTasks(Integer.MAX_VALUE).get(1)
+        String packageName = am.getRunningTasks(Integer.MAX_VALUE).get(index)
                 .topActivity.getPackageName();
 
 
@@ -166,7 +165,7 @@ public class ViewManager {
     }
 
     public String convertKeyCodeToKey(KeyEvent event, int keyCode) {
-        String key = MainActivity.mKeyMap.get(keyCode);
+        String key = KeymapService.mKeyMap.get(keyCode);
         if (key == null) {
             boolean isPrintingKey = event.getKeyCharacterMap().isPrintingKey(keyCode);
             if (isPrintingKey) {

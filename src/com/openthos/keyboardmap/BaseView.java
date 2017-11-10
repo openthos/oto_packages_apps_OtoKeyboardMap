@@ -109,7 +109,7 @@ public class BaseView extends View {
         final int keyCode = event.getKeyCode();
         switch (keyCode) {
             case KeyEvent.KEYCODE_F12:
-                MainActivity.mHandler.sendEmptyMessage(0);
+                KeymapService.mHandler.sendEmptyMessage(0);
                 return true;
         }
 
@@ -239,7 +239,7 @@ public class BaseView extends View {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        setMeasuredDimension(MainActivity.screenWidth, MainActivity.screenHeight);
+        setMeasuredDimension(KeymapService.screenWidth, KeymapService.screenHeight);
     }
 
     @Override
@@ -247,6 +247,6 @@ public class BaseView extends View {
         super.onDraw(canvas);
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(0x00ffffff);
-        canvas.drawRect(0, 0, MainActivity.screenWidth, MainActivity.screenHeight, paint);
+        canvas.drawRect(0, 0, KeymapService.screenWidth, KeymapService.screenHeight, paint);
     }
 }

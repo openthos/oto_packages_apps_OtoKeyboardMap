@@ -66,8 +66,8 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
         ViewManager.mDragViewList.clear();
         ViewManager.mDirectionKeyArr = new Integer[]{-1, -1, -1, -1, -1, -1, -1};
 
-        mMinRadius = MainActivity.screenHeight / 16;
-        mMaxRadius = MainActivity.screenHeight / 4;
+        mMinRadius = KeymapService.screenHeight / 16;
+        mMaxRadius = KeymapService.screenHeight / 4;
     }
 
     boolean isAdd = false;
@@ -97,14 +97,14 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        setMeasuredDimension(MainActivity.screenWidth, MainActivity.screenHeight);
+        setMeasuredDimension(KeymapService.screenWidth, KeymapService.screenHeight);
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.add_button:
-                createNewDragView("", MainActivity.screenWidth / 2, MainActivity.screenHeight / 2);
+                createNewDragView("", KeymapService.screenWidth / 2, KeymapService.screenHeight / 2);
                 break;
             case R.id.add_trend_control:
                 break;
@@ -112,7 +112,7 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
                createVirtualWhell(0, 0, false, null, null, null, null);
                 break;
             case R.id.save:
-                MainActivity.mHandler.sendEmptyMessage(1);
+                KeymapService.mHandler.sendEmptyMessage(1);
                 storeMappingConfiguration();
                 break;
         }
@@ -120,8 +120,12 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
 
     // store mapping configuration
     public void storeMappingConfiguration() {
-        ActivityManager am = (ActivityManager) mContext                                                                                                                                                                         .getSystemService(Context.ACTIVITY_SERVICE);
-        String packageName = am.getRunningTasks(Integer.MAX_VALUE).get(1)
+        ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        int index = 0;
+        if (am.getRunningTasks(Integer.MAX_VALUE).size() > 1) {
+            index = 1;
+        }
+        String packageName = am.getRunningTasks(Integer.MAX_VALUE).get(index)
                 .topActivity.getPackageName();
         MappingSQLiteOpenHelper mOpenHelper =
                 new MappingSQLiteOpenHelper(mContext);
@@ -232,7 +236,7 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
             if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
                 if (event.getSource() == (InputDevice.SOURCE_GAMEPAD | InputDevice.SOURCE_KEYBOARD)
                         | event.getSource() == InputDevice.SOURCE_JOYSTICK) {
-                    key = MainActivity.mKeyMap.get(keyCode);
+                    key = KeymapService.mKeyMap.get(keyCode);
                     if (key != null) {
                         ViewManager.mDragViewList.remove(mCurrentView);
                         mViewGroup.removeView(mCurrentView);
@@ -258,7 +262,7 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
         } else if (mIsDirectionKey) {
             if (event.getSource() == (InputDevice.SOURCE_GAMEPAD | InputDevice.SOURCE_KEYBOARD)
                     | event.getSource() == InputDevice.SOURCE_JOYSTICK) {
-                key = MainActivity.mKeyMap.get(keyCode);
+                key = KeymapService.mKeyMap.get(keyCode);
             } else if (event.getSource() == InputDevice.SOURCE_KEYBOARD) {
                 boolean isPrintingKey = event.getKeyCharacterMap().isPrintingKey(keyCode);
                 if (isPrintingKey) {
