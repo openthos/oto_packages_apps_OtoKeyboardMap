@@ -31,9 +31,10 @@ public class ControlView extends FrameLayout {
     private Paint mPaint;
     private Context mContext;
     private ViewGroup mViewGroup;
-    private Button mAddButton, mAddTrend, mAddTrendByButton, mSave, mExit;
+    private Button mAddButton, mAddTrend, mAddTrendByButton, mReset, mSave, mExit;
     private Bitmap mBitmapW;
     private DragView mCurrentView;
+    private List<DragView> mDragViews = new ArrayList<>();
 
     private Paint paint;
     private RelativeLayout mRlDirectionKey;
@@ -45,14 +46,10 @@ public class ControlView extends FrameLayout {
     boolean mIsDrag;
     boolean mCanResize;
     private int[] mLocations = new int[2];
-    ;
     private boolean mIsDirectionKey, mIsFunctionKey;
     private TextView currentTextView;
-
-
     private View mTrendView, mTrendByButtonView;
     private TextView mTvLeft, mTvUp, mTvRight, mTvDown;
-
     private double mDistance;
     private int mMinRadius, mMaxRadius;
     private int mCircleThick = 10;
@@ -86,6 +83,7 @@ public class ControlView extends FrameLayout {
         mAddButton = (Button) mViewGroup.findViewById(R.id.add_button);
         mAddTrend = (Button) mViewGroup.findViewById(R.id.add_trend_control);
         mAddTrendByButton = (Button) mViewGroup.findViewById(R.id.add_trend_control_by_button);
+        mReset = (Button) mViewGroup.findViewById(R.id.reset);
         mSave = (Button) mViewGroup.findViewById(R.id.save);
         mExit = (Button) mViewGroup.findViewById(R.id.exit);
 
@@ -93,6 +91,7 @@ public class ControlView extends FrameLayout {
         mAddButton.setOnTouchListener(headerButtonTouchListener);
         mAddTrend.setOnTouchListener(headerButtonTouchListener);
         mAddTrendByButton.setOnTouchListener(headerButtonTouchListener);
+        mReset.setOnTouchListener(headerButtonTouchListener);
         mSave.setOnTouchListener(headerButtonTouchListener);
         mExit.setOnTouchListener(headerButtonTouchListener);
     }
@@ -107,11 +106,7 @@ public class ControlView extends FrameLayout {
     // store mapping configuration
     public void storeMappingConfiguration() {
         ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
-        int index = 0;
-        if (am.getRunningTasks(Integer.MAX_VALUE).size() > 1) {
-            index = 1;
-        }
-        String packageName = am.getRunningTasks(Integer.MAX_VALUE).get(index)
+        String packageName = am.getRunningTasks(Integer.MAX_VALUE).get(0)
                 .topActivity.getPackageName();
         MappingSQLiteOpenHelper mOpenHelper =
                 new MappingSQLiteOpenHelper(mContext);
@@ -158,6 +153,7 @@ public class ControlView extends FrameLayout {
         mBitmapW = buildBitmap(key);
         mCurrentView = new DragView(mContext, mBitmapW, x, y);
         mViewGroup.addView(mCurrentView);
+        mDragViews.add(mCurrentView);
 
 //        setContentView(mViewGroup);
         return mCurrentView;
@@ -492,6 +488,20 @@ public class ControlView extends FrameLayout {
                 break;
             case R.id.add_trend_control_by_button:
                 createVirtualWhell(0, 0, false, null, null, null, null);
+                break;
+            case R.id.reset:
+                if (mTrendByButtonView != null) {
+                    mViewGroup.removeView(mTrendByButtonView);
+                    mTrendByButtonView = null;
+                }
+                for (DragView dragView : mDragViews) {
+                    mViewGroup.removeView(dragView);
+                }
+                mDragViews.clear();
+                ViewManager.mDragViewList.clear();
+                mCurrentView = null;
+                mIsDirectionKey = false;
+                mIsFunctionKey = false;
                 break;
             case R.id.save:
                 KeymapService.mHandler.sendEmptyMessage(1);

@@ -109,19 +109,12 @@ public class ViewManager {
     public void loadMappingConfiguration() {
         ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         List<ActivityManager.RunningTaskInfo> runningTasks = am.getRunningTasks(Integer.MAX_VALUE);
-        int index = 0;
-        if (runningTasks.size() > 1) {
-            index = 1;
-        }
-        String packageName = am.getRunningTasks(Integer.MAX_VALUE).get(index)
+        String packageName = am.getRunningTasks(Integer.MAX_VALUE).get(0)
                 .topActivity.getPackageName();
-
-
         MappingSQLiteOpenHelper mOpenHelper = new MappingSQLiteOpenHelper(context);
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         Cursor directionCursor = db.rawQuery("select * from " + mOpenHelper.mDirectionKeyTableName
                 + " where packageName = ?", new String[]{packageName});
-
         KeyEvent event = new KeyEvent(0, 0);
         String key = "";
 
