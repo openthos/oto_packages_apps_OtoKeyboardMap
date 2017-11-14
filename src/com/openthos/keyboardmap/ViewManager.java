@@ -44,6 +44,10 @@ public class ViewManager {
     }
 
     public void showBase() {
+        if (mBaseView != null) {
+            hideView();
+            return;
+        }
         hideControl();
         mBaseView = new BaseView(context);
         windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
@@ -80,6 +84,10 @@ public class ViewManager {
     }
 
     public void showControl() {
+        if (mControlView != null) {
+            hideControl();
+            return;
+        }
         hideView();
         mControlView  = new ControlView(context);
         windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);

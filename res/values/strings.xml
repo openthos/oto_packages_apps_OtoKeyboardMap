@@ -1,15 +1,16 @@
 <resources>
     <string name="app_name">KeyboardMap</string>
-    <string name="start_floatingBall">开启悬浮球功能</string>
-    <string name="open_setting">Open Setting</string>
-    <string name="open_map">Open Map</string>
-    <string name="add_button">Add button</string>
     <string name="save">Save</string>
     <string name="exit">Exit</string>
-    <string name="add_trend_by_button">Add trend controler by button</string>
+    <string name="add_button">Add button</string>
     <string name="add_trend">Add trend controler</string>
+    <string name="add_trend_by_button">Add trend controler by button</string>
     <string name="w">W</string>
     <string name="s">S</string>
     <string name="a">A</string>
     <string name="d">D</string>
+    <string name="left">←</string>
+    <string name="right">→</string>
+    <string name="up">↑</string>
+    <string name="down">↓</string>
 </resources>

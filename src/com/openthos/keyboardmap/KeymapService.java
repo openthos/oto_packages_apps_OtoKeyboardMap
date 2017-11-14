@@ -22,14 +22,11 @@ public class KeymapService extends Service {
     public static HashMap<Integer, String> mKeyMap = new HashMap();
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    public void onCreate() {
         initKey();
-
         WallpaperManager wm = WallpaperManager.getInstance(this);
         screenWidth = wm.getDesiredMinimumWidth();
         screenHeight = wm.getDesiredMinimumHeight();
-
-
         mHandler = new Handler() {
             @Override
             public void handleMessage(Message msg) {
@@ -47,6 +44,10 @@ public class KeymapService extends Service {
                 }
             }
         };
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
 
 
         ViewManager.getInstance(KeymapService.this).showControl();
