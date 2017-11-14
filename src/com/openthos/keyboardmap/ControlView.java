@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class ControlView extends FrameLayout implements View.OnClickListener {
+public class ControlView extends FrameLayout {
     private Paint mPaint;
     private Context mContext;
     private ViewGroup mViewGroup;
@@ -88,11 +88,13 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
         mAddTrendByButton = (Button) mViewGroup.findViewById(R.id.add_trend_control_by_button);
         mSave = (Button) mViewGroup.findViewById(R.id.save);
         mExit = (Button) mViewGroup.findViewById(R.id.exit);
-        mAddButton.setOnClickListener(this);
-        mAddTrend.setOnClickListener(this);
-        mAddTrendByButton.setOnClickListener(this);
-        mSave.setOnClickListener(this);
-        mExit.setOnClickListener(this);
+
+        HeaderButtonTouchListener headerButtonTouchListener = new HeaderButtonTouchListener();
+        mAddButton.setOnTouchListener(headerButtonTouchListener);
+        mAddTrend.setOnTouchListener(headerButtonTouchListener);
+        mAddTrendByButton.setOnTouchListener(headerButtonTouchListener);
+        mSave.setOnTouchListener(headerButtonTouchListener);
+        mExit.setOnTouchListener(headerButtonTouchListener);
     }
 
     @Override
@@ -100,27 +102,6 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
 
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         setMeasuredDimension(KeymapService.screenWidth, KeymapService.screenHeight);
-    }
-
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.add_button:
-                createNewDragView("", KeymapService.screenWidth / 2, KeymapService.screenHeight / 2);
-                break;
-            case R.id.add_trend_control:
-                break;
-            case R.id.add_trend_control_by_button:
-               createVirtualWhell(0, 0, false, null, null, null, null);
-                break;
-            case R.id.save:
-                KeymapService.mHandler.sendEmptyMessage(1);
-                storeMappingConfiguration();
-                break;
-            case R.id.exit:
-                KeymapService.mHandler.sendEmptyMessage(2);
-                break;
-        }
     }
 
     // store mapping configuration
@@ -398,7 +379,7 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
                                             && (mDistance < mBigCircleRadius))) {
                                 v.setScaleX(scale);
                                 v.setScaleY(scale);
-                                mBigCircleRadius = (int) mDistance;
+                                mBigCircleRadius = (int) mDistance + 1;
                                 mCircleThick = (int) (10 * scale);
                             }
                         } else {
@@ -453,7 +434,7 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
                     if (!mIsDrag) {
                         mDistance = Math.pow(Math.abs(event.getRawX() - mCircleCenterX), 2)
                                 + Math.pow(Math.abs(event.getRawY() - mCircleCenterY), 2);
-                        if (mDistance <= Math.pow(mBigCircleRadius, 2)
+                        if (mDistance <= Math.pow(mBigCircleRadius + 2, 2)
                                 && mDistance >= Math.pow(mBigCircleRadius - mCircleThick, 2)) {
                             mCanResize = true;
                         } else {
@@ -465,6 +446,60 @@ public class ControlView extends FrameLayout implements View.OnClickListener {
                     break;
             }
             return false;
+        }
+    }
+
+    private class HeaderButtonTouchListener implements View.OnTouchListener {
+        float downX, downY;
+        boolean isMove = false;
+
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    downX = event.getRawX();
+                    downY = event.getRawY();
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    int dx = (int) (event.getRawX() - downX);
+                    int dy = (int) (event.getRawY() - downY);
+                    if (isMove || (!isMove && (Math.abs(dx) >= 10 || Math.abs(dy) >= 10))) {
+                        v.layout(v.getLeft() + dx, v.getTop() + dy,
+                            v.getRight() + dx, v.getBottom() + dy);
+                        downX = event.getRawX();
+                        downY = event.getRawY();
+                        isMove = true;
+                    }
+                    break;
+                case MotionEvent.ACTION_UP:
+                    if (!isMove) {
+                        clickButton(v);
+                    }
+                    isMove = false;
+                    break;
+            }
+            return false;
+        }
+    }
+
+    public void clickButton(View v) {
+        switch (v.getId()) {
+            case R.id.add_button:
+                createNewDragView("", KeymapService.screenWidth / 2,
+                        KeymapService.screenHeight / 2);
+                break;
+            case R.id.add_trend_control:
+                break;
+            case R.id.add_trend_control_by_button:
+                createVirtualWhell(0, 0, false, null, null, null, null);
+                break;
+            case R.id.save:
+                KeymapService.mHandler.sendEmptyMessage(1);
+                storeMappingConfiguration();
+                break;
+            case R.id.exit:
+                KeymapService.mHandler.sendEmptyMessage(2);
+                break;
         }
     }
 }
