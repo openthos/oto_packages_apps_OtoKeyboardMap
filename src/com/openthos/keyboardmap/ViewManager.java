@@ -134,13 +134,14 @@ public class ViewManager {
                         directionCursor.getColumnIndex("circleCenterY"));
                 int distance = directionCursor.getInt(
                         directionCursor.getColumnIndex("distance"));
+                float scale = directionCursor.getFloat(directionCursor.getColumnIndex("scale"));
+                scale = (scale == 0) ? 1.0f : scale;
 
-                mControlView.createVirtualWhell(circleCenterX - distance,
-                        circleCenterY - distance, true,
+                mControlView.createVirtualWhell(circleCenterX, circleCenterY, true,
                         convertKeyCodeToKey(event, leftKeyCode),
                         convertKeyCodeToKey(event, topKeyCode),
                         convertKeyCodeToKey(event, rightKeyCode),
-                        convertKeyCodeToKey(event, bottomKeyCode));
+                        convertKeyCodeToKey(event, bottomKeyCode), scale, distance);
                 mDirectionKeyArr[0] = leftKeyCode;
                 mDirectionKeyArr[1] = topKeyCode;
                 mDirectionKeyArr[2] = rightKeyCode;

@@ -17,5 +17,5 @@
         android:endColor="@android:color/white"></gradient>
 
 
-    <size   android:width="400dp" android:height="400dp"></size>
+    <size   android:width="@dimen/trend_diameter" android:height="@dimen/trend_diameter"></size>
 </shape>

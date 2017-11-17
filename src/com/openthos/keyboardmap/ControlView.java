@@ -53,6 +53,8 @@ public class ControlView extends FrameLayout {
     private double mDistance;
     private int mMinRadius, mMaxRadius;
     private int mCircleThick = 10;
+    private float mScale = 1.0f;
+    private int mTrendRadius;
 
     public ControlView(Context context) {
         super(context);
@@ -65,6 +67,7 @@ public class ControlView extends FrameLayout {
 
         mMinRadius = KeymapService.screenHeight / 16;
         mMaxRadius = KeymapService.screenHeight / 4;
+        mTrendRadius = (int) (context.getResources().getDimension(R.dimen.trend_diameter) / 2);
     }
 
     boolean isAdd = false;
@@ -118,12 +121,12 @@ public class ControlView extends FrameLayout {
 
         db.execSQL("insert into " + mOpenHelper.mDirectionKeyTableName +
                         "(packageName, schemeName, leftKeyCode, topKeyCode, rightKeyCode," +
-                        " bottomKeyCode, circleCenterX, circleCenterY, distance) " +
-                        "values(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        " bottomKeyCode, circleCenterX, circleCenterY, distance, scale) " +
+                        "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 new Object[] {packageName, "default", ViewManager.mDirectionKeyArr[0],
                         ViewManager.mDirectionKeyArr[1], ViewManager.mDirectionKeyArr[2],
                         ViewManager.mDirectionKeyArr[3], ViewManager.mDirectionKeyArr[4],
-                        ViewManager.mDirectionKeyArr[5], ViewManager.mDirectionKeyArr[6]});
+                        ViewManager.mDirectionKeyArr[5], ViewManager.mDirectionKeyArr[6], mScale});
 
         for (DragView dragView : ViewManager.mDragViewList) {
             db.execSQL("insert into " + mOpenHelper.mFunctionKeyTableName +
@@ -132,7 +135,7 @@ public class ControlView extends FrameLayout {
                                            dragView.mMotionX, dragView.mMotionY});
         }
         db.close();
-     }
+    }
 
     public Bitmap buildBitmap(String key) {
         final TextView textView = new TextView(mContext);
@@ -159,8 +162,8 @@ public class ControlView extends FrameLayout {
         return mCurrentView;
     }
 
-    public void createVirtualWhell(int leftMargin, int topMargin, boolean isLoaded, String leftKey,
-                                   String topKey, String rightKey, String bottomKey) {
+    public void createVirtualWhell(int centerX, int centerY, boolean isLoaded, String leftKey,
+                    String topKey, String rightKey, String bottomKey, float scale, int distance) {
         if (mTrendByButtonView == null) {
             mTrendByButtonView = View.inflate(mContext, R.layout.trend_view, null);
             mRlDirectionKey = (RelativeLayout) mTrendByButtonView.findViewById(R.id.rl_direction_key);
@@ -182,14 +185,22 @@ public class ControlView extends FrameLayout {
 
             mRlDirectionParams = new RelativeLayout.LayoutParams(
                     RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-            mRlDirectionParams.leftMargin = leftMargin;
-            mRlDirectionParams.topMargin = topMargin;
-
+            mRlDirectionParams.leftMargin = centerX - mTrendRadius;
+            mRlDirectionParams.topMargin = centerY - mTrendRadius;
             mRlDirectionKey.setLayoutParams(mRlDirectionParams);
-            if (mBigCircleRadius == 0) {
+
+            mScale = scale;
+            mRlDirectionKey.setScaleX(mScale);
+            mRlDirectionKey.setScaleY(mScale);
+
+            if (distance == 0) {
                 mRlDirectionKey.measure(0, 0);
                 mBigCircleRadius = mRlDirectionKey.getMeasuredWidth() / 2;
+            } else {
+                mBigCircleRadius = distance;
             }
+            mCircleCenterX = centerX;
+            mCircleCenterY = centerY;
 
             DirectionKeyTouchListener touchListener = new DirectionKeyTouchListener();
             DirectionKeyHoverListener hoverListener = new DirectionKeyHoverListener();
@@ -367,16 +378,16 @@ public class ControlView extends FrameLayout {
                             mIsDrag = true;
                             mDistance = Math.sqrt(Math.pow(event.getRawX() - mCircleCenterX, 2)
                                     + Math.pow(event.getRawY() - mCircleCenterY, 2));
-                            float scale = (float) (mDistance / (v.getWidth() / 2));
                             if ((mBigCircleRadius >= mMinRadius && mBigCircleRadius <= mMaxRadius)
                                     || (mBigCircleRadius < mMinRadius
                                             && (mDistance > mBigCircleRadius))
                                     || (mBigCircleRadius > mMaxRadius
                                             && (mDistance < mBigCircleRadius))) {
-                                v.setScaleX(scale);
-                                v.setScaleY(scale);
+                                mScale = (float) (mDistance / (v.getWidth() / 2));
+                                v.setScaleX(mScale);
+                                v.setScaleY(mScale);
                                 mBigCircleRadius = (int) mDistance + 1;
-                                mCircleThick = (int) (10 * scale);
+                                mCircleThick = (int) (10 * mScale);
                             }
                         } else {
                             newLeft = v.getLeft() + dX;
@@ -487,7 +498,8 @@ public class ControlView extends FrameLayout {
             case R.id.add_trend_control:
                 break;
             case R.id.add_trend_control_by_button:
-                createVirtualWhell(0, 0, false, null, null, null, null);
+                createVirtualWhell(mTrendRadius, mTrendRadius,
+                        false, null, null, null, null, 1.0f, 0);
                 break;
             case R.id.reset:
                 if (mTrendByButtonView != null) {
@@ -502,6 +514,8 @@ public class ControlView extends FrameLayout {
                 mCurrentView = null;
                 mIsDirectionKey = false;
                 mIsFunctionKey = false;
+                mScale = 1.0f;
+                mBigCircleRadius = 0;
                 break;
             case R.id.save:
                 KeymapService.mHandler.sendEmptyMessage(1);
