@@ -11,6 +11,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.TextView;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 
@@ -29,7 +30,7 @@ public class ViewManager {
     Context context;
     private WindowManager.LayoutParams mBaseViewParams;
     private WindowManager.LayoutParams mControlViewParams;
-    public static List<ControlView.DragView> mDragViewList = new ArrayList<>();
+    public static List<TextView> mDragViewList = new ArrayList<>();
     public static Integer[] mDirectionKeyArr = new Integer[]{-1, -1, -1, -1, -1, -1, -1};
 
     private ViewManager(Context context) {
@@ -68,7 +69,6 @@ public class ViewManager {
             windowManager.removeView(mBaseView);
             mBaseView = null;
         }
-
     }
 
     void hideControl() {
@@ -101,7 +101,6 @@ public class ViewManager {
             mControlViewParams.format = PixelFormat.RGBA_8888;
         }
         windowManager.addView(mControlView, mControlViewParams);
-
         loadMappingConfiguration();
     }
 
@@ -137,35 +136,42 @@ public class ViewManager {
                 float scale = directionCursor.getFloat(directionCursor.getColumnIndex("scale"));
                 scale = (scale == 0) ? 1.0f : scale;
 
-                mControlView.createVirtualWhell(circleCenterX, circleCenterY, true,
-                        convertKeyCodeToKey(event, leftKeyCode),
-                        convertKeyCodeToKey(event, topKeyCode),
-                        convertKeyCodeToKey(event, rightKeyCode),
-                        convertKeyCodeToKey(event, bottomKeyCode), scale, distance);
-                mDirectionKeyArr[0] = leftKeyCode;
-                mDirectionKeyArr[1] = topKeyCode;
-                mDirectionKeyArr[2] = rightKeyCode;
-                mDirectionKeyArr[3] = bottomKeyCode;
-                mDirectionKeyArr[4] = circleCenterX;
-                mDirectionKeyArr[5] = circleCenterY;
-                mDirectionKeyArr[6] = distance;
-
+                if (leftKeyCode != -1) {
+                    mControlView.createVirtualWhell(circleCenterX, circleCenterY, true,
+                            convertKeyCodeToKey(event, leftKeyCode),
+                            convertKeyCodeToKey(event, topKeyCode),
+                            convertKeyCodeToKey(event, rightKeyCode),
+                            convertKeyCodeToKey(event, bottomKeyCode), scale, distance);
+                    mDirectionKeyArr[0] = leftKeyCode;
+                    mDirectionKeyArr[1] = topKeyCode;
+                    mDirectionKeyArr[2] = rightKeyCode;
+                    mDirectionKeyArr[3] = bottomKeyCode;
+                    mDirectionKeyArr[4] = circleCenterX;
+                    mDirectionKeyArr[5] = circleCenterY;
+                    mDirectionKeyArr[6] = distance;
+                }
             }
         }
         directionCursor.close();
 
         Cursor functionCursor = db.rawQuery("select * from " + mOpenHelper.mFunctionKeyTableName +
-                " where packageName = ?", new String[]{packageName});
+                " where packageName = ?", new String[] {packageName});
         ViewManager.mDragViewList.clear();
-        ControlView.DragView dragView = null;
+        TextView textView = null;
+        List<Integer> textViewTag = null;
         if (functionCursor != null && functionCursor.getCount() != 0) {
             while (functionCursor.moveToNext()) {
                 int keyCode = functionCursor.getInt(functionCursor.getColumnIndex("keyCode"));
                 int valueX = functionCursor.getInt(functionCursor.getColumnIndex("valueX"));
                 int valueY = functionCursor.getInt(functionCursor.getColumnIndex("valueY"));
-                dragView = mControlView.createNewDragView(convertKeyCodeToKey(event, keyCode), valueX, valueY);
-                dragView.keyCode = keyCode;
-                mDragViewList.add(dragView);
+                textView = mControlView.createDragTextView(convertKeyCodeToKey(event, keyCode),
+                                                           valueX, valueY);
+                textViewTag = (List<Integer>) textView.getTag();
+                textViewTag.set(0, keyCode);
+                textViewTag.set(1, valueX);
+                textViewTag.set(2, valueY);
+                textView.setTag(textViewTag);
+                mDragViewList.add(textView);
             }
         }
         functionCursor.close();

@@ -8,6 +8,7 @@ import android.os.SystemClock;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,14 +23,16 @@ public class BaseView extends View {
             mCurrentDirectionY, mDistanceFromCircleToKey;
     public List<Integer> mDirectionKeys = new ArrayList<>();
     private boolean is = false;
+    private List<Integer> mTextViewTag;
 
     public BaseView(Context context) {
         super(context);
         paint = new Paint();
         mFunctionKeys.clear();
         mDirectionKeys.clear();
-        for (ControlView.DragView dragView : ViewManager.mDragViewList) {
-            mFunctionKeys.add(dragView.keyCode);
+        for (TextView dragView : ViewManager.mDragViewList) {
+            mTextViewTag = (List<Integer>) dragView.getTag();
+            mFunctionKeys.add(mTextViewTag.get(0));
         }
         mDirectionKeys = Arrays.asList(ViewManager.mDirectionKeyArr);
         if (mDirectionKeys.size() > 0) {
@@ -68,8 +71,10 @@ public class BaseView extends View {
                 long time = SystemClock.uptimeMillis();
                 if (needMove) {
                     in.sendPointerSync(MotionEvent.obtain(time, time, eventType, x, y, 0));
-                    in.sendPointerSync(MotionEvent.obtain(time, time, MotionEvent.ACTION_DOWN, downX, downY, 0));
-                    in.sendPointerSync(MotionEvent.obtain(time, time, MotionEvent.ACTION_MOVE, moveX, moveY, 0));
+                    in.sendPointerSync(MotionEvent.obtain(time, time, MotionEvent.ACTION_DOWN,
+                                                          downX, downY, 0));
+                    in.sendPointerSync(MotionEvent.obtain(time, time, MotionEvent.ACTION_MOVE,
+                                                          moveX, moveY, 0));
                 } else {
                     in.sendPointerSync(MotionEvent.obtain(time, time, eventType, x, y, 0));
                 }
@@ -98,7 +103,9 @@ public class BaseView extends View {
             is = false;
             mFx = mFy = 0.0f;
             processDirectionKeyMapping(mInstrumentation, MotionEvent.ACTION_UP,
-                    (float)( mCircleCenterX+ fx*100), (float)(mCircleCenterY+ fy*100) , false, mCircleCenterX, mCircleCenterY);
+                                       (float)( mCircleCenterX+ fx*100),
+                                       (float)(mCircleCenterY+ fy*100) ,
+                                       false, mCircleCenterX, mCircleCenterY);
         }
 
         return super.dispatchGenericMotionEvent(event);
@@ -159,19 +166,17 @@ public class BaseView extends View {
             } else if (mFunctionKeys.contains(event.getKeyCode())) {
                 // todo down functionkey
                 int index = mFunctionKeys.indexOf(keyCode);
+                mTextViewTag = (List<Integer>) ViewManager.mDragViewList.get(index).getTag();
                 if (is == true) {
                     processFunctionKeyMapping(mInstrumentation, MotionEvent.ACTION_DOWN,
-                            ViewManager.mDragViewList.get(index).
-                                    mWUpX + 45, ViewManager.mDragViewList.get(index).mWUpY + 45,
+                            mTextViewTag.get(1) + 45, mTextViewTag.get(2) + 45,
                             true, mCircleCenterX, mCircleCenterY, mFx, mFy);
                 } else if (mPressedDirectionKeyCount == 0) {
                     processFunctionKeyMapping(mInstrumentation, MotionEvent.ACTION_DOWN,
-                            ViewManager.mDragViewList.get(index).mWUpX + 45,
-                            ViewManager.mDragViewList.get(index).mWUpY + 45, false, 0, 0, 0, 0);
+                            mTextViewTag.get(1) + 45, mTextViewTag.get(2) + 45, false, 0, 0, 0, 0);
                 } else {
                     processFunctionKeyMapping(mInstrumentation, MotionEvent.ACTION_DOWN,
-                            ViewManager.mDragViewList.get(index).
-                                    mWUpX + 45, ViewManager.mDragViewList.get(index).mWUpY + 45,
+                            mTextViewTag.get(1) + 45, mTextViewTag.get(2) + 45,
                             true, mCircleCenterX, mCircleCenterY,
                             mCurrentDirectionX, mCurrentDirectionY);
                 }
@@ -214,19 +219,17 @@ public class BaseView extends View {
             } else if (mFunctionKeys.contains(event.getKeyCode())) {
                 // todo up functionkey
                 int index = mFunctionKeys.indexOf(keyCode);
+                mTextViewTag = (List<Integer>) ViewManager.mDragViewList.get(index).getTag();
                 if (is == true) {
                     processFunctionKeyMapping(mInstrumentation, MotionEvent.ACTION_UP,
-                            ViewManager.mDragViewList.get(index).
-                                    mWUpX + 45, ViewManager.mDragViewList.get(index).mWUpY + 45,
+                            mTextViewTag.get(1) + 45, mTextViewTag.get(2) + 45,
                             true, mCircleCenterX, mCircleCenterY, mFx, mFy);
                 } else if (mPressedDirectionKeyCount == 0) {
                     processFunctionKeyMapping(mInstrumentation, MotionEvent.ACTION_UP,
-                            ViewManager.mDragViewList.get(index).mWUpX + 45,
-                            ViewManager.mDragViewList.get(index).mWUpY + 45, false, 0, 0, 0, 0);
+                            mTextViewTag.get(1) + 45, mTextViewTag.get(2) + 45, false, 0, 0, 0, 0);
                 } else {
                     processFunctionKeyMapping(mInstrumentation, MotionEvent.ACTION_UP,
-                            ViewManager.mDragViewList.get(index).
-                                    mWUpX + 45, ViewManager.mDragViewList.get(index).mWUpY + 45,
+                            mTextViewTag.get(1) + 45, mTextViewTag.get(2) + 45,
                             true, mCircleCenterX, mCircleCenterY,
                             mCurrentDirectionX, mCurrentDirectionY);
                 }

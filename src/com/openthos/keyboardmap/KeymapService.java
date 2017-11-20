@@ -40,7 +40,7 @@ public class KeymapService extends Service {
                         break;
                     case 2:
                         ViewManager.getInstance(KeymapService.this).exit();
-
+                        break;
                 }
             }
         };
@@ -48,12 +48,9 @@ public class KeymapService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
-
         ViewManager.getInstance(KeymapService.this).showControl();
         return super.onStartCommand(intent, flags, startId);
     }
-
 
     private void initKey() {
         mKeyMap.put(KeyEvent.KEYCODE_BUTTON_X, "X");

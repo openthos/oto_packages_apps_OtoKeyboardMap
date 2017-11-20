@@ -1,7 +1,9 @@
 package com.openthos.keyboardmap;
+
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+
 public class MappingSQLiteOpenHelper extends SQLiteOpenHelper {
     private static final int mVersion = 2;
     private static final String mDbName = "mappingConfigurationFile";

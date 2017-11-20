@@ -34,6 +34,14 @@
             android:background="@drawable/mapping_button_bg_shape" />
 
         <Button
+            android:id="@+id/delete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/delete"
+            android:textColor="@color/white"
+            android:background="@drawable/mapping_button_bg_shape" />
+
+        <Button
             android:id="@+id/reset"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

@@ -6,7 +6,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.InputDevice;
@@ -20,23 +19,14 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import org.w3c.dom.Text;
-
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class ControlView extends FrameLayout {
-    private Paint mPaint;
     private Context mContext;
     private ViewGroup mViewGroup;
-    private Button mAddButton, mAddTrend, mAddTrendByButton, mReset, mSave, mExit;
-    private Bitmap mBitmapW;
-    private DragView mCurrentView;
-    private List<DragView> mDragViews = new ArrayList<>();
-
-    private Paint paint;
+    private Button mAddButton, mAddTrend, mAddTrendByButton, mDelete, mReset, mSave, mExit;
     private RelativeLayout mRlDirectionKey;
     private RelativeLayout.LayoutParams mRlDirectionParams;
     private int mCircleCenterX;
@@ -55,10 +45,13 @@ public class ControlView extends FrameLayout {
     private int mCircleThick = 10;
     private float mScale = 1.0f;
     private int mTrendRadius;
+    public List<TextView> mDragViews = new ArrayList<>();
+    public View mCurrentView;
+    private List<Integer> mTextViewTag;
+    private TextViewOnTouchListener mTouchListener;
 
     public ControlView(Context context) {
         super(context);
-        mPaint = new Paint();
         mContext = context;
         initView();
         setBackgroundColor(0x55ffffff);
@@ -86,6 +79,7 @@ public class ControlView extends FrameLayout {
         mAddButton = (Button) mViewGroup.findViewById(R.id.add_button);
         mAddTrend = (Button) mViewGroup.findViewById(R.id.add_trend_control);
         mAddTrendByButton = (Button) mViewGroup.findViewById(R.id.add_trend_control_by_button);
+        mDelete = (Button) mViewGroup.findViewById(R.id.delete);
         mReset = (Button) mViewGroup.findViewById(R.id.reset);
         mSave = (Button) mViewGroup.findViewById(R.id.save);
         mExit = (Button) mViewGroup.findViewById(R.id.exit);
@@ -94,6 +88,7 @@ public class ControlView extends FrameLayout {
         mAddButton.setOnTouchListener(headerButtonTouchListener);
         mAddTrend.setOnTouchListener(headerButtonTouchListener);
         mAddTrendByButton.setOnTouchListener(headerButtonTouchListener);
+        mDelete.setOnTouchListener(headerButtonTouchListener);
         mReset.setOnTouchListener(headerButtonTouchListener);
         mSave.setOnTouchListener(headerButtonTouchListener);
         mExit.setOnTouchListener(headerButtonTouchListener);
@@ -119,54 +114,111 @@ public class ControlView extends FrameLayout {
         db.delete(mOpenHelper.mFunctionKeyTableName,
                 "packageName = ?", new String[] {packageName});
 
-        db.execSQL("insert into " + mOpenHelper.mDirectionKeyTableName +
-                        "(packageName, schemeName, leftKeyCode, topKeyCode, rightKeyCode," +
-                        " bottomKeyCode, circleCenterX, circleCenterY, distance, scale) " +
-                        "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                new Object[] {packageName, "default", ViewManager.mDirectionKeyArr[0],
-                        ViewManager.mDirectionKeyArr[1], ViewManager.mDirectionKeyArr[2],
-                        ViewManager.mDirectionKeyArr[3], ViewManager.mDirectionKeyArr[4],
-                        ViewManager.mDirectionKeyArr[5], ViewManager.mDirectionKeyArr[6], mScale});
+        if (ViewManager.mDirectionKeyArr[0] != -1) {
+            db.execSQL("insert into " + mOpenHelper.mDirectionKeyTableName +
+                            "(packageName, schemeName, leftKeyCode, topKeyCode, rightKeyCode," +
+                            " bottomKeyCode, circleCenterX, circleCenterY, distance, scale) " +
+                            "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    new Object[] {packageName, "default", ViewManager.mDirectionKeyArr[0],
+                            ViewManager.mDirectionKeyArr[1], ViewManager.mDirectionKeyArr[2],
+                            ViewManager.mDirectionKeyArr[3], ViewManager.mDirectionKeyArr[4],
+                            ViewManager.mDirectionKeyArr[5], ViewManager.mDirectionKeyArr[6],
+                            mScale});
+        }
 
-        for (DragView dragView : ViewManager.mDragViewList) {
+        for (TextView dragView : ViewManager.mDragViewList) {
+            mTextViewTag = (List<Integer>) dragView.getTag();
             db.execSQL("insert into " + mOpenHelper.mFunctionKeyTableName +
                     "(packageName, schemeName,keyCode, valueX, valueY) values(?, ?, ?, ?, ?)",
-                           new Object[] {packageName, "default", dragView.keyCode,
-                                           dragView.mMotionX, dragView.mMotionY});
+                                       new Object[] {packageName, "default", mTextViewTag.get(0),
+                                                       mTextViewTag.get(1), mTextViewTag.get(2)});
         }
         db.close();
     }
 
-    public Bitmap buildBitmap(String key) {
-        final TextView textView = new TextView(mContext);
-        textView.setText(key);
-        textView.setTextSize(50);
-        textView.setTextColor(Color.GREEN);
-        textView.setBackgroundResource(R.drawable.mapping_key_bg_shape);
-        textView.setGravity(Gravity.CENTER);
-        textView.setDrawingCacheEnabled(true);
-        textView.measure(0, 0);
-        textView.layout(0, 0, textView.getMeasuredWidth(), textView.getMeasuredHeight());
-        textView.buildDrawingCache();
-        Bitmap bitmap = textView.getDrawingCache();
-        return bitmap;
+    class TextViewOnTouchListener implements View.OnTouchListener{
+        int lastX, lastY;
+        TextView textView;
+
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            if (v instanceof TextView) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        textView = (TextView) v;
+                        mCurrentView = textView;
+                        lastX = (int) event.getRawX();
+                        lastY = (int) event.getRawY();
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        int dX = (int) (event.getRawX() - lastX);
+                        int dY = (int) (event.getRawY() - lastY);
+
+                        int newLeft = textView.getLeft() + dX;
+                        int newTop = textView.getTop() + dY;
+                        int newRight = textView.getRight() + dX;
+                        int newBottom = textView.getBottom() + dY;
+                        textView.layout(newLeft, newTop, newRight, newBottom);
+
+                        invalidate();
+                        lastX = lastX + dX;
+                        lastY = lastY + dY;
+
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        FrameLayout.LayoutParams params = (LayoutParams) textView.getLayoutParams();
+                        params.leftMargin = textView.getLeft();
+                        params.topMargin = textView.getTop();
+                        textView.setLayoutParams(params);
+
+                        mTextViewTag = (List<Integer>) textView.getTag();
+                        mTextViewTag.set(1, textView.getLeft());
+                        mTextViewTag.set(2, textView.getTop());
+                        textView.setTag(mTextViewTag);
+                        break;
+                }
+            }
+            return true;
+        }
     }
 
-    public DragView createNewDragView(String key, int x, int y) {
-        mBitmapW = buildBitmap(key);
-        mCurrentView = new DragView(mContext, mBitmapW, x, y);
-        mViewGroup.addView(mCurrentView);
-        mDragViews.add(mCurrentView);
+    public TextView createDragTextView(String key, int left, int top) {
+        TextView textView = new TextView(mContext);
+        textView.setTextSize(50);
+        textView.setTextColor(Color.GREEN);
+        textView.setText(key);
+        textView.setBackgroundResource(R.drawable.mapping_key_bg_shape);
+        mTextViewTag = new ArrayList<>();
+        mTextViewTag.clear();
+        mTextViewTag.add(-1);
+        mTextViewTag.add(-1);
+        mTextViewTag.add(-1);
+        textView.setTag(mTextViewTag);
 
-//        setContentView(mViewGroup);
-        return mCurrentView;
+        if (mTouchListener == null) {
+            mTouchListener = new TextViewOnTouchListener();
+        }
+        textView.setOnTouchListener(mTouchListener);
+
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                    RelativeLayout.LayoutParams.WRAP_CONTENT,
+                    RelativeLayout.LayoutParams.WRAP_CONTENT);
+        params.leftMargin = left;
+        params.topMargin = top;
+
+        textView.setLayoutParams(params);
+        textView.setGravity(Gravity.CENTER);
+        mDragViews.add(textView);
+        mViewGroup.addView(textView);
+        return textView;
     }
 
     public void createVirtualWhell(int centerX, int centerY, boolean isLoaded, String leftKey,
                     String topKey, String rightKey, String bottomKey, float scale, int distance) {
         if (mTrendByButtonView == null) {
             mTrendByButtonView = View.inflate(mContext, R.layout.trend_view, null);
-            mRlDirectionKey = (RelativeLayout) mTrendByButtonView.findViewById(R.id.rl_direction_key);
+            mRlDirectionKey = (RelativeLayout) mTrendByButtonView.findViewById(
+                                                            R.id.rl_direction_key);
             mTvLeft = (TextView) mTrendByButtonView.findViewById(R.id.tv_left);
             mTvUp = (TextView) mTrendByButtonView.findViewById(R.id.tv_up);
             mTvRight = (TextView) mTrendByButtonView.findViewById(R.id.tv_right);
@@ -184,7 +236,8 @@ public class ControlView extends FrameLayout {
             }
 
             mRlDirectionParams = new RelativeLayout.LayoutParams(
-                    RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                                        RelativeLayout.LayoutParams.WRAP_CONTENT,
+                                        RelativeLayout.LayoutParams.WRAP_CONTENT);
             mRlDirectionParams.leftMargin = centerX - mTrendRadius;
             mRlDirectionParams.topMargin = centerY - mTrendRadius;
             mRlDirectionKey.setLayoutParams(mRlDirectionParams);
@@ -211,7 +264,6 @@ public class ControlView extends FrameLayout {
             mTvRight.setOnTouchListener(touchListener);
             mTvDown.setOnTouchListener(touchListener);
 
-
             FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT);
@@ -225,134 +277,71 @@ public class ControlView extends FrameLayout {
         int keyCode = event.getKeyCode();
         String key = null;
 
-        if (mIsFunctionKey) {
-            if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+        if (mCurrentView != null) {
+            if (mCurrentView instanceof TextView) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+                    if (event.getSource() == (
+                                    InputDevice.SOURCE_GAMEPAD | InputDevice.SOURCE_KEYBOARD)
+                            | event.getSource() == InputDevice.SOURCE_JOYSTICK) {
+                        key = KeymapService.mKeyMap.get(keyCode);
+                    } else if (event.getSource() == InputDevice.SOURCE_KEYBOARD) {
+                        boolean isPrintingKey = event.getKeyCharacterMap().isPrintingKey(keyCode);
+                        if (isPrintingKey) {
+                            key = String.valueOf((char) event.getUnicodeChar()).toUpperCase();
+                        } else {
+                            key = keyCode + "";
+                        }
+                    }
+                    if (key != null) {
+                        TextView textView = (TextView) mCurrentView;
+                        if (ViewManager.mDragViewList.contains(textView)) {
+                            ViewManager.mDragViewList.remove(textView);
+                        }
+                        textView.setText(key);
+                        mTextViewTag = (List<Integer>) textView.getTag();
+                        mTextViewTag.set(0, keyCode);
+                        textView.setTag(mTextViewTag);
+                        ViewManager.mDragViewList.add(textView);
+                    }
+                }
+            } else if (mCurrentView == mTrendByButtonView) {
                 if (event.getSource() == (InputDevice.SOURCE_GAMEPAD | InputDevice.SOURCE_KEYBOARD)
                         | event.getSource() == InputDevice.SOURCE_JOYSTICK) {
                     key = KeymapService.mKeyMap.get(keyCode);
-                    if (key != null) {
-                        ViewManager.mDragViewList.remove(mCurrentView);
-                        mViewGroup.removeView(mCurrentView);
-                    }
                 } else if (event.getSource() == InputDevice.SOURCE_KEYBOARD) {
-
                     boolean isPrintingKey = event.getKeyCharacterMap().isPrintingKey(keyCode);
-                    ViewManager.mDragViewList.remove(mCurrentView);
-                    mViewGroup.removeView(mCurrentView);
-
                     if (isPrintingKey) {
                         key = String.valueOf((char) event.getUnicodeChar()).toUpperCase();
                     } else {
                         key = keyCode + "";
                     }
                 }
-                if (key != null) {
-                    DragView newDragView = createNewDragView(key, mCurrentView.mWUpX, mCurrentView.mWUpY);
-                    newDragView.keyCode = keyCode;
-                    ViewManager.mDragViewList.add(newDragView);
+                if (key != null && currentTextView != null) {
+                    currentTextView.setText(key);
+                    if (currentTextView == mTvLeft) {
+                        ViewManager.mDirectionKeyArr[0] = keyCode;
+                    } else if (currentTextView == mTvUp) {
+                        ViewManager.mDirectionKeyArr[1] = keyCode;
+                    } else if (currentTextView == mTvRight) {
+                        ViewManager.mDirectionKeyArr[2] = keyCode;
+                    } else if (currentTextView == mTvDown) {
+                        ViewManager.mDirectionKeyArr[3] = keyCode;
+                    }
                 }
             }
-        } else if (mIsDirectionKey) {
-            if (event.getSource() == (InputDevice.SOURCE_GAMEPAD | InputDevice.SOURCE_KEYBOARD)
-                    | event.getSource() == InputDevice.SOURCE_JOYSTICK) {
-                key = KeymapService.mKeyMap.get(keyCode);
-            } else if (event.getSource() == InputDevice.SOURCE_KEYBOARD) {
-                boolean isPrintingKey = event.getKeyCharacterMap().isPrintingKey(keyCode);
-                if (isPrintingKey) {
-                    key = String.valueOf((char) event.getUnicodeChar()).toUpperCase();
-                } else {
-                    key = keyCode + "";
-                }
-            }
-            if (key != null) {
-                currentTextView.setText(key);
-                if (currentTextView == mTvLeft) {
-                    ViewManager.mDirectionKeyArr[0] = keyCode;
-                } else if (currentTextView == mTvUp) {
-                    ViewManager.mDirectionKeyArr[1] = keyCode;
-                } else if (currentTextView == mTvRight) {
-                    ViewManager.mDirectionKeyArr[2] = keyCode;
-                } else if (currentTextView == mTvDown) {
-                    ViewManager.mDirectionKeyArr[3] = keyCode;
-                }
-            }
-
-
-        }
-        if (key != null) {
-            Log.i("wwww", key);
         }
         return super.dispatchKeyEvent(event);
     }
 
-    public class DragView extends View {
-        public int mWUpX, mWUpY;
-        public int mMotionX;
-        public int mMotionY;
-        private Paint mPaint;
-        private Bitmap mBitmap;
-        //        private boolean mIsCanReCreate = false;
-//        public String key = "";
-        public int keyCode;
-
-        public DragView(Context context, Bitmap bitmap, int x, int y) {
-            super(context);
-            mPaint = new Paint();
-            mBitmap = bitmap;
-            mWUpX = mMotionX = x;
-            mWUpY = mMotionY = y;
-//            mIsCanReCreate = canReCreate;
-        }
-
-        @Override
-        protected void onDraw(Canvas canvas) {
-            super.onDraw(canvas);
-            canvas.drawBitmap(mBitmap, mMotionX, mMotionY, mPaint);
-        }
-
-        @Override
-        public boolean onTouchEvent(MotionEvent event) {
-            boolean isMove = false;
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    mIsFunctionKey = true;
-                    mIsDirectionKey = false;
-                    requestFocus();
-                    mCurrentView = this;
-                    if (event.getX() <= mMotionX + mBitmap.getWidth()
-                            && event.getX() >= mMotionX
-                            && event.getY() <= mMotionY + mBitmap.getHeight()
-                            && event.getY() >= mMotionY) {
-                        isMove = true;
-                    }
-                    break;
-                case MotionEvent.ACTION_MOVE:
-                    isMove = true;
-                    mMotionX = (int) event.getX() - mBitmap.getWidth() / 2;
-                    mMotionY = (int) event.getY() - mBitmap.getHeight() / 2;
-                    invalidate();
-                    break;
-                case MotionEvent.ACTION_UP:
-
-                    mWUpX = mMotionX;
-                    mWUpY = mMotionY;
-                    break;
-            }
-            return isMove;
-        }
-    }
-
     class DirectionKeyTouchListener implements View.OnTouchListener {
         int lastX, lastY;
-
         int newLeft, newTop, newRight, newBottom;
 
         @Override
         public boolean onTouch(View v, MotionEvent event) {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    mIsFunctionKey = false;
-
+                    mCurrentView = mTrendByButtonView;
                     lastX = (int) event.getRawX();
                     lastY = (int) event.getRawY();
                     if (v.getId() != R.id.rl_direction_key) {
@@ -492,8 +481,7 @@ public class ControlView extends FrameLayout {
     public void clickButton(View v) {
         switch (v.getId()) {
             case R.id.add_button:
-                createNewDragView("", KeymapService.screenWidth / 2,
-                        KeymapService.screenHeight / 2);
+                createDragTextView("", 500, 200);
                 break;
             case R.id.add_trend_control:
                 break;
@@ -501,16 +489,33 @@ public class ControlView extends FrameLayout {
                 createVirtualWhell(mTrendRadius, mTrendRadius,
                         false, null, null, null, null, 1.0f, 0);
                 break;
+            case R.id.delete:
+                if (mCurrentView != null) {
+                    if (mCurrentView == mTrendByButtonView) {
+                        mViewGroup.removeView(mCurrentView);
+                        mCurrentView = mTrendByButtonView = null;
+                        mIsDirectionKey = false;
+                        ViewManager.mDirectionKeyArr = new Integer[]{-1, -1, -1, -1, -1, -1, -1};
+                    } else {
+                        mViewGroup.removeView(mCurrentView);
+                        mDragViews.remove(mCurrentView);
+                        ViewManager.mDragViewList.remove(mCurrentView);
+                        mCurrentView = null;
+                        mIsFunctionKey = false;
+                    }
+                }
+                break;
             case R.id.reset:
                 if (mTrendByButtonView != null) {
                     mViewGroup.removeView(mTrendByButtonView);
                     mTrendByButtonView = null;
                 }
-                for (DragView dragView : mDragViews) {
+                for (TextView dragView : mDragViews) {
                     mViewGroup.removeView(dragView);
                 }
                 mDragViews.clear();
                 ViewManager.mDragViewList.clear();
+                ViewManager.mDirectionKeyArr = new Integer[]{-1, -1, -1, -1, -1, -1, -1};
                 mCurrentView = null;
                 mIsDirectionKey = false;
                 mIsFunctionKey = false;
