@@ -1,4 +1,4 @@
-package com.openthos.keyboardmap;
+package org.openthos.keyboardmap;
 
 import android.app.Instrumentation;
 import android.content.Context;

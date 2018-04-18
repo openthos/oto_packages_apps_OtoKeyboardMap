@@ -1,4 +1,4 @@
-package com.openthos.keyboardmap;
+package org.openthos.keyboardmap;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
